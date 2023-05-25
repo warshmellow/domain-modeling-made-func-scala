@@ -1,5 +1,7 @@
 package example
 
+import cats.data.NonEmptyList
+import cats.syntax.all._
 object OrderTakingDomain {
   type WidgetCode = String
   type GizmoCode = String
@@ -30,7 +32,7 @@ object OrderTakingDomain {
       customerId: CustomerId,
       shippingAddress: ShippingAddress,
       billingAddress: BillingAddress,
-      orderLines: Seq[OrderLine],
+      orderLines: NonEmptyList[OrderLine],
       amountToBill: BillingAmount
   )
 
@@ -63,5 +65,14 @@ object OrderTakingDomain {
 
   type PlaceOrder =
     UnvalidatedOrder => Either[PlaceOrderError, PlaceOrderEvents]
+
+  type EmailAddress = String
+  type VerifiedEmailAddress = String
+
+  sealed trait CustomerEmail
+  case class Unverified(emailAddress: EmailAddress) extends CustomerEmail
+  case class Verified(verifiedEmailAddress: VerifiedEmailAddress)
+      extends CustomerEmail
+
 
 }
