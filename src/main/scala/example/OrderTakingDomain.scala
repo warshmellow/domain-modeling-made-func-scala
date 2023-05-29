@@ -21,7 +21,6 @@ object OrderTakingDomain {
   case class Unit(unitQuantity: UnitQuantity)
   case class Kilos(kilogramQuantity: KilogramQuantity)
 
-  type OrderLineId = Int
   type CustomerId = Int
 
   case class FirstAndLastName(

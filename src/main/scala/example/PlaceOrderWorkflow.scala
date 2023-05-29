@@ -135,4 +135,17 @@ object PlaceOrderWorkflow {
       case Right(value) => value.asRight
     }
   }
+
+  def toOrderLineId(
+      orderId: String
+  ): Either[ValidationError, OrderLineId] = {
+    OrderLineId.create("OrderLineId", orderId) match {
+      case Left(error) =>
+        ValidationError(
+          "OrderLineId",
+          error
+        ).asLeft
+      case Right(value) => value.asRight
+    }
+  }
 }
