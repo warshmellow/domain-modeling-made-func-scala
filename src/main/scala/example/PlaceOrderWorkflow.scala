@@ -1,9 +1,13 @@
 package example
 
 import cats.data.EitherT
-import example.OrderTakingDomain._
+import example.OrderTakingDomain.{UnvalidatedOrder, _}
 import cats.syntax.all._
-import example.PlaceOrderWorkflow.toOrderLineId
+import example.PlaceOrderWorkflow.{
+  CheckAddressExists,
+  CheckProductCodeExists,
+  toOrderLineId
+}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -48,9 +52,7 @@ object PlaceOrderWorkflow {
   type ValidateOrder =
     CheckProductCodeExists => CheckAddressExists => UnvalidatedOrder => EitherT[
       Future,
-      Seq[
-        ValidatedOrder
-      ],
+      ValidationError,
       ValidatedOrder
     ]
 
@@ -198,4 +200,51 @@ object PlaceOrderWorkflow {
       quantity
     )
   }
+
+  def validateOrder: ValidateOrder =
+    (checkProductCodeExists: CheckProductCodeExists) =>
+      (checkAddressExists: CheckAddressExists) =>
+        (unvalidatedOrder: UnvalidatedOrder) => {
+
+          for {
+            orderId <- EitherT.fromEither[Future](
+              toOrderId(unvalidatedOrder.orderId)
+            )
+            customerInfo <- EitherT.fromEither[Future](
+              toCustomerInfo(unvalidatedOrder.customerInfo)
+            )
+
+            checkedShippingAddress <- toCheckedAddress(checkAddressExists)(
+              unvalidatedOrder.shippingAddress
+            )
+
+            shippingAddress <- EitherT.fromEither[Future](
+              toAddress(checkedShippingAddress)
+            )
+
+            checkedBillingAddress <-
+              toCheckedAddress(checkAddressExists)(
+                unvalidatedOrder.billingAddress
+              )
+
+            billingAddress <- EitherT.fromEither[Future](
+              toAddress(checkedBillingAddress)
+            )
+
+            lines <- EitherT.fromEither[Future] {
+              unvalidatedOrder.lines
+                .map(
+                  toValidatedOrderLine(checkProductCodeExists)
+                )
+                .sequence
+            }
+
+          } yield ValidatedOrder(
+            orderId = orderId,
+            customerInfo = customerInfo,
+            shippingAddress = shippingAddress,
+            billingAddress = billingAddress,
+            lines = lines
+          )
+        }
 }

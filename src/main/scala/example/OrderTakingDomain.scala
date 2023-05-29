@@ -64,9 +64,8 @@ object OrderTakingDomain {
       orderId: String,
       customerInfo: UnvalidatedCustomerInfo,
       shippingAddress: UnvalidatedAddress,
-      billingAddress: String,
-      orderLines: Seq[String],
-      amountToBill: Int
+      billingAddress: UnvalidatedAddress,
+      lines: Seq[UnvalidatedOrderLine]
   )
 
   case class ValidatedOrder(
