@@ -105,7 +105,16 @@ object PlaceOrderWorkflow {
 
   def toAddress(
       checkedAddress: CheckedAddress
-  ): Either[ValidationError, Address] = ???
+  ): Either[ValidationError, Address] = {
+
+    val address = checkedAddress.unvalidatedAddress
+
+    Address(
+      addressLine = address.addressLine,
+      city = address.city,
+      zipCode = address.zipCode
+    ).asRight
+  }
 
   def toCheckedAddress(checkAddress: CheckAddressExists)(
       unvalidatedAddress: UnvalidatedAddress

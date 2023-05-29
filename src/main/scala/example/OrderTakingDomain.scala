@@ -116,7 +116,11 @@ object OrderTakingDomain {
       contactInfo: ContactInfo
   )
 
-  type UnvalidatedAddress = String
+  case class UnvalidatedAddress(
+      addressLine: String,
+      city: String,
+      zipCode: String
+  )
   type ValidatedAddress = String
   type AddressValidationService = UnvalidatedAddress => Option[ValidatedAddress]
 
