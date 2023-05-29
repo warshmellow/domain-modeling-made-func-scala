@@ -1,7 +1,11 @@
 package example
 
-import cats.data.NonEmptyList
+import cats.data.{EitherT, NonEmptyList}
 import cats.syntax.all._
+import com.github.nscala_time.time.Imports._
+
+import scala.concurrent.Future
+
 object OrderTakingDomain {
   type WidgetCode = String
   type GizmoCode = String
@@ -22,6 +26,8 @@ object OrderTakingDomain {
   type CustomerId = Int
 
   type CustomerInfo = Int
+  type UnvalidatedCustomerInfo = Int
+  type ValidatedCustomerInfo = Int
   type ShippingAddress = String
   type BillingAddress = String
   type Price = String
@@ -46,7 +52,7 @@ object OrderTakingDomain {
 
   case class UnvalidatedOrder(
       orderId: String,
-      customerInfo: String,
+      customerInfo: UnvalidatedCustomerInfo,
       shippingAddress: UnvalidatedAddress,
       billingAddress: String,
       orderLines: Seq[String],
@@ -104,4 +110,27 @@ object OrderTakingDomain {
   type UnvalidatedAddress = String
   type ValidatedAddress = String
   type AddressValidationService = UnvalidatedAddress => Option[ValidatedAddress]
+
+  case class Command[T](
+      data: T,
+      timestamp: DateTime,
+      userId: String
+  )
+
+  type PlaceOrderCommand = Command[UnvalidatedOrder]
+
+  type OrderPlaced = String
+  type BillableOrderPlaced = String
+  type OrderAcknowledgementSent = String
+
+  sealed trait PlaceOrderEvent
+  case class OrderPlacedEvent(orderPlaced: OrderPlaced) extends PlaceOrderEvent
+  case class BillableOrderPlacedEvent(billableOrderPlaced: BillableOrderPlaced)
+      extends PlaceOrderEvent
+  case class AcknowledgementSent(
+      orderAcknowledgementSent: OrderAcknowledgementSent
+  ) extends PlaceOrderEvent
+
+  type PlaceOrderWorkflow =
+    PlaceOrderCommand => EitherT[Future, PlaceOrderError, Seq[PlaceOrderEvent]]
 }
