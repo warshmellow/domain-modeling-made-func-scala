@@ -28,16 +28,18 @@ object OrderTakingDomain {
   type CustomerInfo = Int
   type UnvalidatedCustomerInfo = Int
   type ValidatedCustomerInfo = Int
-  type ShippingAddress = String
-  type BillingAddress = String
   type Price = String
   type BillingAmount = Double
+
+  sealed trait Address
+  case object ShippingAddress extends Address
+  case object BillingAddress extends Address
 
   case class Order(
       id: OrderId,
       customerId: CustomerId,
-      shippingAddress: ShippingAddress,
-      billingAddress: BillingAddress,
+      shippingAddress: Address,
+      billingAddress: Address,
       orderLines: NonEmptyList[OrderLine],
       amountToBill: BillingAmount
   )
