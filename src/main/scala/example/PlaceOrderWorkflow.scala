@@ -294,14 +294,10 @@ object PlaceOrderWorkflow {
           .sequence
 
         amountToBill <- {
-          val bob: Either[String, BillingAmount] =
-            BillingAmount.sumPrices(lines.map(_.linePrice))
-
-          val carol = bob match {
+          BillingAmount.sumPrices(lines.map(_.linePrice)) match {
             case Left(e)                             => PricingError(e).asLeft
             case Right(billingAmount: BillingAmount) => billingAmount.asRight
           }
-          carol
         }
       } yield PricedOrder(
         validatedOrder.orderId,
