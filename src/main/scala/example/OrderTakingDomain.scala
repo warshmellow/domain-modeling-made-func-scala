@@ -47,6 +47,11 @@ object OrderTakingDomain {
       amountToBill: BillingAmount
   )
 
+  case class UnvalidatedOrderLine(
+      orderLineId: String,
+      productCode: String,
+      quantity: Double
+  )
   case class OrderLine(
       id: OrderLineId,
       orderId: OrderId,

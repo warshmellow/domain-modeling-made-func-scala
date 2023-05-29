@@ -3,6 +3,7 @@ package example
 import cats.data.EitherT
 import example.OrderTakingDomain._
 import cats.syntax.all._
+import example.PlaceOrderWorkflow.toOrderLineId
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -175,5 +176,26 @@ object PlaceOrderWorkflow {
       case Left(error)  => ValidationError(error).asLeft
       case Right(value) => value.asRight
     }
+  }
+
+  def toValidatedOrderLine(checkProductExists: CheckProductCodeExists)(
+      unvalidatedOrderLine: UnvalidatedOrderLine
+  ): Either[ValidationError, ValidatedOrderLine] = {
+    for {
+      orderLineId <- toOrderLineId(
+        unvalidatedOrderLine.orderLineId
+      )
+      productCode <- toProductCode(checkProductExists)(
+        unvalidatedOrderLine.productCode
+      )
+      quantity <- toOrderQuantity(
+        productCode,
+        unvalidatedOrderLine.quantity
+      )
+    } yield ValidatedOrderLine(
+      orderLineId,
+      productCode,
+      quantity
+    )
   }
 }
