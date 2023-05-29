@@ -74,5 +74,21 @@ object OrderTakingDomain {
   case class Verified(verifiedEmailAddress: VerifiedEmailAddress)
       extends CustomerEmail
 
+  type EmailContactInfo = String
+  type PostalContactInfo = String
+  case class BothContactMethods(
+      email: EmailContactInfo,
+      address: PostalContactInfo
+  )
 
+  sealed trait ContactInfo
+  case class EmailOnly(emailContactInfo: EmailContactInfo) extends ContactInfo
+  case class AddrOnly(postalContactInfo: PostalContactInfo) extends ContactInfo
+  case class EmailAndAddr(bothContactMethods: BothContactMethods)
+      extends ContactInfo
+
+  case class Contact(
+      name: String,
+      contactInfo: ContactInfo
+  )
 }
