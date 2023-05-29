@@ -11,6 +11,7 @@ import example.PlaceOrderWorkflow.{
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.impl.Promise
 
 object PlaceOrderWorkflow {
   sealed trait Order
@@ -308,4 +309,56 @@ object PlaceOrderWorkflow {
         lines
       )
     }
+
+  //UnvalidatedOrder => Either[PlaceOrderError, PlaceOrderEvents]
+  /*
+type ValidateOrder =
+  CheckProductCodeExists => CheckAddressExists => UnvalidatedOrder => EitherT[
+    Future,
+    ValidationError,
+    ValidatedOrder
+  ]
+
+  type PlaceOrder =
+    UnvalidatedOrder => EitherT[Future, PlaceOrderError, Seq[PlaceOrderEvent]]
+
+   */
+  def placeOrder(
+      checkProductCodeExists: CheckProductCodeExists,
+      checkAddressExists: CheckAddressExists,
+      getProductPrice: GetProductPrice
+  ): PlaceOrder = (unvalidatedOrder: UnvalidatedOrder) => {
+    for {
+      validatedOrder <- {
+        val validationErrorOrValidatedOrderT = {
+          validateOrder(checkProductCodeExists)(
+            checkAddressExists
+          )(
+            unvalidatedOrder
+          )
+        }
+
+        EitherT(
+          validationErrorOrValidatedOrderT.value.map {
+            case Left(validationError: ValidationError) =>
+              Validation(validationError).asLeft
+            case Right(value) => value.asRight
+          }
+        )
+
+      }
+      pricedOrder <- EitherT.fromEither[Future] {
+        val alice: Either[PricingError, PricedOrder] =
+          priceOrder(getProductPrice)(validatedOrder)
+        alice match {
+          case Left(pricingError: PricingError) =>
+            Pricing(pricingError).asInstanceOf[PlaceOrderError].asLeft
+          case Right(value) => value.asRight
+        }
+      }
+
+    } yield {
+      Seq.empty[PlaceOrderEvent]
+    }
+  }
 }

@@ -89,7 +89,7 @@ object OrderTakingDomain {
   case class Pricing(pricingError: PricingError) extends PlaceOrderError
 
   type PlaceOrder =
-    UnvalidatedOrder => Either[PlaceOrderError, PlaceOrderEvents]
+    UnvalidatedOrder => EitherT[Future, PlaceOrderError, Seq[PlaceOrderEvent]]
 
   type VerifiedEmailAddress = String
 
