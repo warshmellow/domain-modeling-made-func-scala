@@ -21,19 +21,32 @@ object OrderTakingDomain {
   case class Unit(unitQuantity: UnitQuantity)
   case class Kilos(kilogramQuantity: KilogramQuantity)
 
-  type OrderId = Int
   type OrderLineId = Int
   type CustomerId = Int
 
-  type CustomerInfo = Int
-  type UnvalidatedCustomerInfo = Int
+  case class FirstAndLastName(
+      firstName: String,
+      lastName: String
+  )
+  case class CustomerInfo(
+      name: FirstAndLastName,
+      emailAddress: EmailAddress
+  )
+  case class UnvalidatedCustomerInfo(
+      firstName: String,
+      lastName: String,
+      emailAddress: String
+  )
   type ValidatedCustomerInfo = Int
   type Price = String
   type BillingAmount = Double
 
-  sealed trait Address
-  case object ShippingAddress extends Address
-  case object BillingAddress extends Address
+  type AddressLine = String
+  case class Address(
+      addressLine: AddressLine,
+      city: String,
+      zipCode: String
+  )
 
   case class Order(
       id: OrderId,
@@ -83,7 +96,6 @@ object OrderTakingDomain {
   type PlaceOrder =
     UnvalidatedOrder => Either[PlaceOrderError, PlaceOrderEvents]
 
-  type EmailAddress = String
   type VerifiedEmailAddress = String
 
   sealed trait CustomerEmail

@@ -5,8 +5,10 @@ import example.OrderTakingDomain._
 import cats.syntax.all._
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object PlaceOrderWorkflow {
+  // Types
   type PricedOrder = String
 
   sealed trait Order
@@ -78,4 +80,59 @@ object PlaceOrderWorkflow {
 
   type CreateEvents =
     PricedOrder => Option[OrderAcknowledgment] => Seq[PlaceOrderEvent]
+
+  // Implementation
+  def toCustomerInfo(
+      unvalidatedCustomerInfo: UnvalidatedCustomerInfo
+  ): Either[ValidationError, CustomerInfo] = {
+    EmailAddress.create(unvalidatedCustomerInfo.emailAddress) match {
+      case Some(emailAddress) =>
+        CustomerInfo(
+          name = FirstAndLastName(
+            unvalidatedCustomerInfo.firstName,
+            unvalidatedCustomerInfo.lastName
+          ),
+          emailAddress
+        ).asRight
+      case None =>
+        ValidationError("emailAddress", "emailAddress invalid").asLeft
+    }
+
+  }
+
+  def toAddress(
+      checkedAddress: CheckedAddress
+  ): Either[ValidationError, Address] = ???
+
+  def toCheckedAddress(checkAddress: CheckAddressExists)(
+      unvalidatedAddress: UnvalidatedAddress
+  ): EitherT[
+    Future,
+    ValidationError,
+    CheckedAddress
+  ] = {
+    val result =
+      checkAddress(unvalidatedAddress).value.map {
+        case Left(e) =>
+          e match {
+            case InvalidFormat =>
+              ValidationError("address", "Address has bad format").asLeft
+            case AddressNotFound =>
+              ValidationError("address", "Address not found").asLeft
+          }
+        case Right(value) => value.asRight
+      }
+    EitherT(result)
+  }
+
+  def toOrderId(orderId: String): Either[ValidationError, example.OrderId] = {
+    OrderId.create("OrderId", orderId) match {
+      case Left(errorMsg) =>
+        ValidationError(
+          "OrderId",
+          errorMsg
+        ).asLeft
+      case Right(value) => value.asRight
+    }
+  }
 }
