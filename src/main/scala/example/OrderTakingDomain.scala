@@ -3,16 +3,11 @@ package example
 import cats.data.{EitherT, NonEmptyList}
 import cats.syntax.all._
 import com.github.nscala_time.time.Imports._
+import example.PlaceOrderWorkflow.PricingError
 
 import scala.concurrent.Future
 
 object OrderTakingDomain {
-  type WidgetCode = String
-  type GizmoCode = String
-
-  sealed trait ProductCode
-  case class Widget(widgetCode: WidgetCode) extends ProductCode
-  case class Gizmo(gizmoCode: GizmoCode) extends ProductCode
 
   type UnitQuantity = Int
   type KilogramQuantity = Double
@@ -86,11 +81,12 @@ object OrderTakingDomain {
       acknowledgementSent: Boolean
   )
 
+  case class ValidationError(error: String)
+
   sealed trait PlaceOrderError
-  case class ValidationError(
-      fieldName: String,
-      errorDescription: String
-  ) extends PlaceOrderError
+  case class Validation(validationError: ValidationError)
+      extends PlaceOrderError
+  case class Pricing(pricingError: PricingError) extends PlaceOrderError
 
   type PlaceOrder =
     UnvalidatedOrder => Either[PlaceOrderError, PlaceOrderEvents]

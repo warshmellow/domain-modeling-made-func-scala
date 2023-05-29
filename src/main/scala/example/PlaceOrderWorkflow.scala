@@ -95,7 +95,7 @@ object PlaceOrderWorkflow {
           emailAddress
         ).asRight
       case None =>
-        ValidationError("emailAddress", "emailAddress invalid").asLeft
+        ValidationError("emailAddress invalid").asLeft
     }
 
   }
@@ -116,9 +116,9 @@ object PlaceOrderWorkflow {
         case Left(e) =>
           e match {
             case InvalidFormat =>
-              ValidationError("address", "Address has bad format").asLeft
+              ValidationError("Address has bad format").asLeft
             case AddressNotFound =>
-              ValidationError("address", "Address not found").asLeft
+              ValidationError("Address not found").asLeft
           }
         case Right(value) => value.asRight
       }
@@ -129,7 +129,6 @@ object PlaceOrderWorkflow {
     OrderId.create("OrderId", orderId) match {
       case Left(errorMsg) =>
         ValidationError(
-          "OrderId",
           errorMsg
         ).asLeft
       case Right(value) => value.asRight
@@ -142,10 +141,29 @@ object PlaceOrderWorkflow {
     OrderLineId.create("OrderLineId", orderId) match {
       case Left(error) =>
         ValidationError(
-          "OrderLineId",
           error
         ).asLeft
       case Right(value) => value.asRight
+    }
+  }
+
+  def toProductCode(checkProductCodeExists: CheckProductCodeExists)(
+      productCode: String
+  ): Either[ValidationError, ProductCode] = {
+    def checkProduct(
+        productCode: ProductCode
+    ): Either[ValidationError, ProductCode] = {
+      if (checkProductCodeExists(productCode)) {
+        productCode.asRight
+      } else {
+        val msg = s"Invalid: $productCode"
+        ValidationError(msg).asLeft
+      }
+    }
+
+    ProductCode.create("ProductCode", productCode) match {
+      case Left(error)        => ValidationError(error).asLeft
+      case Right(productCode) => checkProduct(productCode)
     }
   }
 }
