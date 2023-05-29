@@ -47,7 +47,16 @@ object OrderTakingDomain {
   case class UnvalidatedOrder(
       orderId: String,
       customerInfo: String,
-      shippingAddress: String,
+      shippingAddress: UnvalidatedAddress,
+      billingAddress: String,
+      orderLines: Seq[String],
+      amountToBill: Int
+  )
+
+  case class ValidatedOrder(
+      orderId: String,
+      customerInfo: String,
+      shippingAddress: ValidatedAddress,
       billingAddress: String,
       orderLines: Seq[String],
       amountToBill: Int
@@ -91,4 +100,8 @@ object OrderTakingDomain {
       name: String,
       contactInfo: ContactInfo
   )
+
+  type UnvalidatedAddress = String
+  type ValidatedAddress = String
+  type AddressValidationService = UnvalidatedAddress => Option[ValidatedAddress]
 }
