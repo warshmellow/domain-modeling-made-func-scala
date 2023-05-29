@@ -13,9 +13,6 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object PlaceOrderWorkflow {
-  // Types
-  type PricedOrder = String
-
   sealed trait Order
   case class Unvalidated(unvalidatedOrder: UnvalidatedOrder) extends Order
   case class Validated(validatedOrder: ValidatedOrder) extends Order
@@ -57,7 +54,7 @@ object PlaceOrderWorkflow {
     ]
 
   type GetProductPrice = ProductCode => Price
-  type PricingError = IllegalArgumentException
+  case class PricingError(str: String)
   type PriceOrder =
     GetProductPrice => ValidatedOrder => Either[PricingError, PricedOrder]
 
@@ -256,4 +253,63 @@ object PlaceOrderWorkflow {
             lines = lines
           )
         }
+
+  def toPricedOrderLine(
+      getProductPrice: GetProductPrice
+  )(
+      validatedOrderLine: ValidatedOrderLine
+  ): Either[PricingError, PricedOrderLine] = {
+    val qty: OrderQuantity = validatedOrderLine.quantity
+    val price = getProductPrice(validatedOrderLine.productCode)
+    Price.multiply(qty, price) match {
+      case Left(e) => PricingError(e).asLeft
+      case Right(linePrice) =>
+        PricedOrderLine(
+          validatedOrderLine.orderLineId,
+          validatedOrderLine.productCode,
+          validatedOrderLine.quantity,
+          linePrice
+        ).asRight
+    }
+  }
+
+  /*
+  type PriceOrder =
+    GetProductPrice => ValidatedOrder => Either[PricingError, PricedOrder]
+
+    case class PricedOrder(
+      orderId: OrderId,
+      customerInfo: CustomerInfo,
+      shippingAddress: Address,
+      billingAddress: Address,
+      amountToBill: BillingAmount,
+      lines: Seq[PricedOrderLine]
+  )
+   */
+  def priceOrder: PriceOrder = (getProductPrice: GetProductPrice) =>
+    (validatedOrder: ValidatedOrder) => {
+      for {
+        lines <- validatedOrder.lines
+          .map(toPricedOrderLine(getProductPrice))
+          .sequence
+
+        amountToBill <- {
+          val bob: Either[String, BillingAmount] =
+            BillingAmount.sumPrices(lines.map(_.linePrice))
+
+          val carol = bob match {
+            case Left(e)                             => PricingError(e).asLeft
+            case Right(billingAmount: BillingAmount) => billingAmount.asRight
+          }
+          carol
+        }
+      } yield PricedOrder(
+        validatedOrder.orderId,
+        validatedOrder.customerInfo,
+        validatedOrder.shippingAddress,
+        validatedOrder.billingAddress,
+        amountToBill,
+        lines
+      )
+    }
 }

@@ -28,7 +28,7 @@ object OrderTakingDomain {
       emailAddress: String
   )
   type ValidatedCustomerInfo = Int
-  type Price = String
+  type Price = Double
   type BillingAmount = Double
 
   type AddressLine = String
@@ -146,4 +146,20 @@ object OrderTakingDomain {
 
   type PlaceOrderWorkflow =
     PlaceOrderCommand => EitherT[Future, PlaceOrderError, Seq[PlaceOrderEvent]]
+
+  case class PricedOrderLine(
+      orderLineId: OrderLineId,
+      productCode: ProductCode,
+      quantity: OrderQuantity,
+      linePrice: Price
+  )
+
+  case class PricedOrder(
+      orderId: OrderId,
+      customerInfo: CustomerInfo,
+      shippingAddress: Address,
+      billingAddress: Address,
+      amountToBill: BillingAmount,
+      lines: Seq[PricedOrderLine]
+  )
 }
