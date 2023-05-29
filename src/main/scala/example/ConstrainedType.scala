@@ -18,6 +18,40 @@ object ConstrainedType {
     }
   }
 
+  def createInt[T](
+      fieldName: String,
+      minVal: Int,
+      maxVal: Int,
+      i: Int
+  ): Either[String, T] = {
+    if (i < minVal) {
+      val msg = s"$fieldName: Must not be less than $minVal"
+      msg.asLeft
+    } else if (i > maxVal) {
+      val msg = s"$fieldName: Must not be greater than $maxVal"
+      msg.asLeft
+    } else {
+      i.asInstanceOf[T].asRight
+    }
+  }
+
+  def createDecimal[T](
+      fieldName: String,
+      minVal: Double,
+      maxVal: Double,
+      i: Double
+  ): Either[String, T] = {
+    if (i < minVal) {
+      val msg = s"$fieldName: Must not be less than $minVal"
+      msg.asLeft
+    } else if (i > maxVal) {
+      val msg = s"$fieldName: Must not be greater than $maxVal"
+      msg.asLeft
+    } else {
+      i.asInstanceOf[T].asRight
+    }
+  }
+
   def createLike[T](
       fieldName: String,
       ctor: String => T,

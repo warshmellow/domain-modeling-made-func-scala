@@ -12,10 +12,6 @@ object OrderTakingDomain {
   type UnitQuantity = Int
   type KilogramQuantity = Double
 
-  sealed trait OrderQuantity
-  case class Unit(unitQuantity: UnitQuantity)
-  case class Kilos(kilogramQuantity: KilogramQuantity)
-
   type CustomerId = Int
 
   case class FirstAndLastName(

@@ -166,4 +166,14 @@ object PlaceOrderWorkflow {
       case Right(productCode) => checkProduct(productCode)
     }
   }
+
+  def toOrderQuantity(
+      productCode: ProductCode,
+      quantity: Double
+  ): Either[ValidationError, OrderQuantity] = {
+    OrderQuantity.create("OrderQuantity", productCode, quantity) match {
+      case Left(error)  => ValidationError(error).asLeft
+      case Right(value) => value.asRight
+    }
+  }
 }
